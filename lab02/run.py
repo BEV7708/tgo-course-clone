@@ -33,8 +33,35 @@ def read_corpus(fast: bool) -> str:
 def normalize(text: str) -> str:
     return text.lower().replace("ё", "е")
 
+def extract_word_counts(text: str, min_freq: int) -> Counter:
+    counts = Counter(re.compile(r"[а-я]+(?:-[а-я]+)*").findall(text))
+    return Counter({w: c for w, c in counts.items() if c >= min_freq})
+
 def word_to_symbols(word: str) -> tuple:
     return tuple(word) + ("</w>",)
+    
+def get_pair_stats(vocab: Counter) -> Counter:
+    pairs = Counter()
+    for symbols, freq in vocab.items():
+        for a, b in zip(symbols, symbols[1:]):
+            pairs[(a, b)] += freq
+    return pairs
+    
+def merge_pair(pair: tuple, vocab: Counter) -> Counter:
+    a, b = pair
+    merged = a + b
+    new_vocab = Counter()
+    for symbols, freq in vocab.items():
+        out, i = [], 0
+        while i < len(symbols):
+            if i < len(symbols) - 1 and symbols[i] == a and symbols[i + 1] == b:
+                out.append(merged)
+                i += 2
+            else:
+                out.append(symbols[i])
+                i += 1
+        new_vocab[tuple(out)] = freq
+    return new_vocab
 
 def main() -> None:
     ap = argparse.ArgumentParser()
