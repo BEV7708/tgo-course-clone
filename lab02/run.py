@@ -5,35 +5,42 @@
 import argparse
 import re
 import json
+import urllib.request
 
 from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ARTIFACTS = HERE / "artifacts"
+CORPUS_URL = (
+    "https://raw.githubusercontent.com/nevmenandr/"
+    "word2vec-russian-novels/master/books_before/WarAndPeace.txt"
+)
 CORPUS_PATH = HERE.parent / "demos" / "02"
+
+def ensure_corpus() -> Path:
+    if not CORPUS_PATH.exists():
+        print(f"[corpus] скачиваю {CORPUS_URL}")
+        urllib.request.urlretrieve(CORPUS_URL, CORPUS_PATH)
+    else:
+        print(f"[corpus] использую локальный {CORPUS_PATH}")
+    return CORPUS_PATH
+    
+def read_corpus(fast: bool) -> str:
+    text = CORPUS_PATH.read_text(encoding="utf-8")
+    return text
 
 def normalize(text: str) -> str:
     return text.lower().replace("ё", "е")
 
-def extract_word_counts(text: str, min_freq: int) -> Counter:
-    counts = Counter(WORD_RE.findall(text))
-    return Counter({w: c for w, c in counts.items() if c >= min_freq})
-
 def word_to_symbols(word: str) -> tuple:
-    return tuple(word) + (END,)
-    
-    
-
-
+    return tuple(word) + ("</w>",)
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--fast", action="store_true", help="быстрый режим для CI")
     args = ap.parse_args()
     ARTIFACTS.mkdir(exist_ok=True)
-    raise NotImplementedError("работа не начата")
-
 
 if __name__ == "__main__":
     main()
